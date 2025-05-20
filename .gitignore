@@ -11,14 +11,14 @@
 [Pp]ackages/
 
 # External Assets
-Assets/NebulaSkyboxes/*
-Assets/Adobe/*
-Assets/Blackhole/*
-Assets/Sci-Fi UI/*
-Assets/SimpleKeplerOrbits/*
-Assets/TextMeshPro/*
-Assets/TutorialInfo/*
-Assets/3D_Sci-fi_asteroid_belt_group_01/*
+Assets/NebulaSkyboxes/
+Assets/Adobe/
+Assets/Blackhole/
+Assets/Sci-Fi UI/
+Assets/SimpleKeplerOrbits/
+Assets/TextMeshPro/
+Assets/TutorialInfo/
+Assets/3D_Sci-fi_asteroid_belt_group_01/
 
 # Visual Studio / VS Code / Cursor
 .vs/
