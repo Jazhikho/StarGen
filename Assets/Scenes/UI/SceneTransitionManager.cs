@@ -45,7 +45,7 @@ public class SceneTransitionManager : MonoBehaviour
         StartCoroutine(UpdateMenuNextFrame());
     }
     
-    private IEnumerator<object> UpdateMenuNextFrame()
+    private System.Collections.IEnumerator UpdateMenuNextFrame()
     {
         yield return null;
         UpdateMenuContext();
@@ -78,10 +78,33 @@ public class SceneTransitionManager : MonoBehaviour
     /// </summary>
     private void UpdateMenuContext()
     {
-        if (_menuPanel == null || _currentScene == null) return;
+        // If no current scene, nothing to update
+        if (_currentScene == null) return;
         
+        // Check if we have a menu panel
+        if (_menuPanel == null) 
+        {
+            // Only log warning if we're in a scene that should have a menu
+            if (_currentScene.GetComponent<GalaxyView>() != null || _currentScene.GetComponent<SystemView>() != null)
+            {
+                Debug.LogWarning("MenuPanel is null but current scene expects a menu");
+            }
+            return;
+        }
+        
+        // Get the MenuPanel component
         MenuPanel menu = _menuPanel.GetComponent<MenuPanel>();
+        if (menu == null) 
+        {
+            // Only log warning if we're in a scene that should have a menu
+            if (_currentScene.GetComponent<GalaxyView>() != null || _currentScene.GetComponent<SystemView>() != null)
+            {
+                Debug.LogWarning("MenuPanel component not found on _menuPanel GameObject");
+            }
+            return;
+        }
         
+        // Update menu context based on current scene
         if (_currentScene.GetComponent<GalaxyView>() != null)
         {
             _menuPanel.SetActive(true);
@@ -94,7 +117,8 @@ public class SceneTransitionManager : MonoBehaviour
         }
         else
         {
-            if (menu != null) // Add null check here too
+            // For title screen or other scenes, just deactivate the menu silently
+            if (menu != null)
                 menu.SetContext(MenuPanel.MenuContext.None);
             _menuPanel.SetActive(false);
         }

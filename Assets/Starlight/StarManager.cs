@@ -34,6 +34,13 @@ namespace Starlight
         [Header("Debug")]
         public bool logDebugInfo = true;
         
+        [Header("Performance")]
+        public bool enableLOD = true;
+        public float lodNearDistance = 100f;
+        public float lodFarDistance = 1000f;
+        public int maxRenderedStars = 10000;
+        public bool enableFrustumCulling = true;
+        
         private List<Star> _stars = new List<Star>();
         private List<Matrix4x4> _matrices = new List<Matrix4x4>();
         private MaterialPropertyBlock _propertyBlock;
@@ -72,6 +79,27 @@ namespace Starlight
             Color[] pixels = new Color[4] { Color.white, Color.white, Color.white, Color.white };
             _defaultTexture.SetPixels(pixels);
             _defaultTexture.Apply();
+            
+            // Initialize emission texture if null
+            if (emissionTexture == null)
+            {
+                // Try to load from Resources
+                emissionTexture = Resources.Load<Texture2D>("StarEmissionTexture");
+                
+                // If still null, create a simple radial gradient texture
+                if (emissionTexture == null)
+                {
+                    CreateDefaultEmissionTexture();
+                }
+            }
+            
+            // Initialize star mesh if it's null
+            if (starMesh == null)
+            {
+                starMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+                if (logDebugInfo)
+                    Debug.Log("Using default quad mesh for stars");
+            }
             
             // Try to find the material if it's not assigned but exists in the project
             if (starMaterial == null)
@@ -118,6 +146,39 @@ namespace Starlight
             }
             
             UpdateMaterialProperties();
+        }
+        
+        private void CreateDefaultEmissionTexture()
+        {
+            int size = 64;
+            emissionTexture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            Color[] pixels = new Color[size * size];
+            
+            Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
+            float maxDistance = size * 0.5f;
+            
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    Vector2 pos = new Vector2(x, y);
+                    float distance = Vector2.Distance(pos, center);
+                    float normalizedDistance = distance / maxDistance;
+                    
+                    // Create radial gradient
+                    float alpha = Mathf.Clamp01(1.0f - normalizedDistance);
+                    alpha = Mathf.Pow(alpha, 2.0f); // Make falloff sharper
+                    
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
+                }
+            }
+            
+            emissionTexture.SetPixels(pixels);
+            emissionTexture.Apply();
+            emissionTexture.name = "Default Star Emission Texture";
+            
+            if (logDebugInfo)
+                Debug.Log("Created default star emission texture");
         }
         
         void OnDestroy()
@@ -251,6 +312,10 @@ namespace Starlight
                 // Reset the property block for each batch
                 _propertyBlock = new MaterialPropertyBlock();
                 
+                // Prepare per-instance data arrays
+                Vector4[] colors = new Vector4[count];
+                float[] luminosities = new float[count];
+                
                 // Set per-instance properties for each star in this batch
                 for (int j = 0; j < count; j++)
                 {
@@ -259,11 +324,16 @@ namespace Starlight
                     
                     // Get the star's color based on temperature
                     Color starColor = BlackbodyToRGB(star.Temperature);
+                    colors[j] = new Vector4(starColor.r, starColor.g, starColor.b, starColor.a);
                     
-                    // Set per-instance data
-                    _propertyBlock.SetColor(StarColorProperty, starColor);
-                    _propertyBlock.SetFloat(StarLuminosityProperty, star.Luminosity);
+                    // Normalize luminosity to prevent extreme brightness
+                    float normalizedLuminosity = Mathf.Clamp(star.Luminosity, 0.01f, luminosityCap);
+                    luminosities[j] = normalizedLuminosity;
                 }
+                
+                // Set per-instance data arrays in the property block
+                _propertyBlock.SetVectorArray("_StarColors", colors);
+                _propertyBlock.SetFloatArray("_StarLuminosities", luminosities);
                 
                 // Ensure textures are properly set
                 if (emissionTexture != null)
@@ -363,6 +433,55 @@ namespace Starlight
             
             // Convert to Unity's color range (0-1)
             return new Color(red / 255.0f, green / 255.0f, blue / 255.0f, 1.0f);
+        }
+        
+        private List<int> GetVisibleStarIndices()
+        {
+            List<int> visibleIndices = new List<int>();
+            
+            if (!Camera.main)
+                return visibleIndices;
+            
+            Vector3 cameraPos = Camera.main.transform.position;
+            Plane[] frustumPlanes = enableFrustumCulling ? GeometryUtility.CalculateFrustumPlanes(Camera.main) : null;
+            
+            for (int i = 0; i < _stars.Count; i++)
+            {
+                Star star = _stars[i];
+                
+                // Frustum culling
+                if (enableFrustumCulling && frustumPlanes != null)
+                {
+                    if (!GeometryUtility.TestPlanesAABB(frustumPlanes, new Bounds(star.Position, Vector3.one * 0.1f)))
+                        continue;
+                }
+                
+                // Distance culling for performance
+                float distance = Vector3.Distance(cameraPos, star.Position);
+                if (distance > lodFarDistance * 2f)
+                    continue;
+                
+                visibleIndices.Add(i);
+                
+                // Limit total rendered stars for performance
+                if (visibleIndices.Count >= maxRenderedStars)
+                    break;
+            }
+            
+            return visibleIndices;
+        }
+        
+        private float CalculateLODFactor(float distance)
+        {
+            if (distance <= lodNearDistance)
+                return 1.0f;
+            else if (distance >= lodFarDistance)
+                return 0.1f;
+            else
+            {
+                float t = (distance - lodNearDistance) / (lodFarDistance - lodNearDistance);
+                return Mathf.Lerp(1.0f, 0.1f, t);
+            }
         }
     }
 }

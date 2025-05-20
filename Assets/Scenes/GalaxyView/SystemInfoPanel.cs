@@ -34,7 +34,9 @@ public class SystemInfoPanel : MonoBehaviour
             return;
         }
         
-        _currentSystem = system;
+        try
+        {
+            _currentSystem = system;
         
         // Update system ID
         if (systemIdLabel != null)
@@ -91,8 +93,14 @@ public class SystemInfoPanel : MonoBehaviour
                 asteroidBeltsLabel.text = $"Asteroid Belts: {asteroidBeltCount}";
         }
         
-        // Make panel visible
-        gameObject.SetActive(true);
+            // Make panel visible
+            gameObject.SetActive(true);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"Error displaying system info for system {system?.ID}: {ex.Message}");
+            ClearPanel("Error loading system information");
+        }
     }
     
     private string GetStarDescription(StarStructure star)

@@ -42,14 +42,21 @@ namespace Starlight
             if (clickCamera == null || _starManager == null || _starManager.StarCount == 0)
                 return;
                 
-            Vector3 mouseRay = clickCamera.ScreenPointToRay(screenPos).direction.normalized;
             float closestDistance = float.MaxValue;
             Star closestStar = null;
             Vector3 closestStarScreenPos = Vector3.zero;
+            float clickableRadius = Screen.height * clickRadius;
+            
+            // Performance optimization: only check stars within frustum
+            Plane[] frustumPlanes = GeometryUtility.CalculateFrustumPlanes(clickCamera);
             
             // Find the closest star to the mouse cursor
             foreach (var star in _starManager.Stars)
             {
+                // Early frustum culling - skip stars outside camera view
+                if (!GeometryUtility.TestPlanesAABB(frustumPlanes, new Bounds(star.Position, Vector3.one * 0.1f)))
+                    continue;
+                
                 // Convert star position to screen space
                 Vector3 starScreenPos = clickCamera.WorldToScreenPoint(star.Position);
                 
@@ -57,14 +64,15 @@ namespace Starlight
                 if (starScreenPos.z < 0)
                     continue;
                     
-                // Calculate 2D screen distance
-                float distInPixels = Vector2.Distance(
-                    new Vector2(screenPos.x, screenPos.y),
-                    new Vector2(starScreenPos.x, starScreenPos.y)
-                );
+                // Quick distance check before pixel calculation
+                float screenDistSqr = (new Vector2(screenPos.x, screenPos.y) - new Vector2(starScreenPos.x, starScreenPos.y)).sqrMagnitude;
+                if (screenDistSqr > clickableRadius * clickableRadius)
+                    continue;
                 
-                // Check if within clickable radius
-                float clickableRadius = Screen.height * clickRadius;
+                // More precise distance calculation only for nearby stars
+                float distInPixels = Mathf.Sqrt(screenDistSqr);
+                
+                // Check if within clickable radius and closer than previous candidates
                 if (distInPixels <= clickableRadius && starScreenPos.z < closestDistance)
                 {
                     closestDistance = starScreenPos.z;

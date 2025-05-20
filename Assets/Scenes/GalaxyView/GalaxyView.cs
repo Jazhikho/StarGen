@@ -66,6 +66,16 @@ public class GalaxyView : MonoBehaviour
             starClickDetector.clickCamera = mainCamera;
         }
         
+        // Check if there's a separate StarSelectionHandler component
+        StarSelectionHandler selectionHandler = GetComponent<StarSelectionHandler>();
+        if (selectionHandler != null)
+        {
+            // If we have a dedicated handler, initialize it with our references
+            selectionHandler.galaxyView = this;
+            selectionHandler.systemInfoPanel = _systemInfoController;
+            selectionHandler.starClickDetector = starClickDetector;
+        }
+        
         // Initialize system info controller
         if (systemInfoPanel != null)
         {
@@ -102,6 +112,15 @@ public class GalaxyView : MonoBehaviour
         
         // Create the visual representation
         CreateVisualRepresentation();
+        
+        // Wait another frame for visual representation to complete
+        yield return null;
+        
+        // Ensure camera is properly positioned after everything is set up
+        if (_cameraController != null)
+        {
+            _cameraController.ResetView();
+        }
     }
     
     public void SetGalaxyData(List<StarSystem> data)
@@ -109,15 +128,25 @@ public class GalaxyView : MonoBehaviour
         if (data == null || data.Count == 0)
         {
             Debug.LogError("Attempted to set null or empty galaxy data");
+            _galaxyData = null; // Clear any existing data
             return;
         }
 
-        _galaxyData = data;
-        
-        // If we're already active, create the visual representation right away
-        if (gameObject.activeInHierarchy)
+        try
         {
-            CreateVisualRepresentation();
+            _galaxyData = data;
+            Debug.Log($"Galaxy data set successfully with {data.Count} star systems");
+            
+            // If we're already active, create the visual representation right away
+            if (gameObject.activeInHierarchy)
+            {
+                CreateVisualRepresentation();
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"Failed to set galaxy data: {ex.Message}");
+            _galaxyData = null;
         }
     }
     
@@ -126,18 +155,36 @@ public class GalaxyView : MonoBehaviour
         if (_isCreatingVisuals || _galaxyData == null)
             return;
             
-        _isCreatingVisuals = true;
-        
-        // Calculate galaxy bounds for camera setup
-        CalculateGalaxyBounds();
-        
-        // Create starfield
-        CreateStarfield();
-        
-        // Create background stars
-        CreateBackgroundStars();
-        
-        _isCreatingVisuals = false;
+        try
+        {
+            _isCreatingVisuals = true;
+            Debug.Log("Creating galaxy visual representation...");
+            
+            // Create starfield first
+            CreateStarfield();
+            
+            // Create background stars
+            CreateBackgroundStars();
+            
+            // Calculate galaxy bounds for camera setup after starfield is created
+            CalculateGalaxyBounds();
+            
+            // Force camera reset to ensure proper positioning
+            if (_cameraController != null)
+            {
+                _cameraController.ResetView();
+            }
+            
+            Debug.Log("Galaxy visual representation created successfully");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"Failed to create galaxy visual representation: {ex.Message}\n{ex.StackTrace}");
+        }
+        finally
+        {
+            _isCreatingVisuals = false;
+        }
     }
     
     private void CalculateGalaxyBounds()
@@ -150,7 +197,7 @@ public class GalaxyView : MonoBehaviour
         
         foreach (var system in _galaxyData)
         {
-            Vector3 position = system.Position;
+            Vector3 position = system.Position * positionScale;
             
             min.x = Mathf.Min(min.x, position.x);
             min.y = Mathf.Min(min.y, position.y);
@@ -175,10 +222,23 @@ public class GalaxyView : MonoBehaviour
             float maxDimension = Mathf.Max(size.x, size.y, size.z);
             float distance = maxDimension * 1.5f;
             
-            // Position camera
+            // Position camera at the center of the galaxy
             mainCamera.transform.position = center + new Vector3(0, distance * 0.3f, distance);
             mainCamera.transform.LookAt(center);
         }
+    }
+    
+    private Vector3 CalculateGalaxyCenter()
+    {
+        if (_galaxyData == null || _galaxyData.Count == 0)
+            return Vector3.zero;
+            
+        Vector3 sum = Vector3.zero;
+        foreach (var system in _galaxyData)
+        {
+            sum += system.Position;
+        }
+        return sum / _galaxyData.Count;
     }
     
     private void CreateStarfield()
@@ -192,6 +252,9 @@ public class GalaxyView : MonoBehaviour
         // Create a list to store the stars
         List<Star> stars = new List<Star>(starCount);
         
+        // Calculate galaxy center for proper 3D distribution
+        Vector3 galaxyCenter = CalculateGalaxyCenter();
+        
         for (int i = 0; i < starCount; i++)
         {
             StarSystem system = _galaxyData[i];
@@ -201,9 +264,20 @@ public class GalaxyView : MonoBehaviour
             
             if (primaryStar != null)
             {
+                // Create a proper 3D distribution by adding Z variance
+                Vector3 position = system.Position * positionScale;
+                
+                // Add vertical spread to prevent "wall" effect
+                if (Mathf.Abs(position.z) < 1f) // If Z is nearly flat
+                {
+                    float distanceFromCenter = Vector3.Distance(new Vector3(position.x, position.y, 0), new Vector3(galaxyCenter.x, galaxyCenter.y, 0));
+                    float zVariance = Mathf.Clamp(distanceFromCenter * 0.1f, 10f, 500f); // Scale Z based on distance from center
+                    position.z += UnityEngine.Random.Range(-zVariance, zVariance);
+                }
+                
                 // Convert to Starlight Star format
                 Star star = new Star(
-                    system.Position * positionScale, // Scale position for better visibility
+                    position,
                     primaryStar.Luminosity,
                     primaryStar.Temperature
                 );
@@ -219,51 +293,32 @@ public class GalaxyView : MonoBehaviour
     
     private void CreateBackgroundStars()
     {
-        // Check if we already have a background starfield
-        if (transform.Find("BackgroundStars") != null)
+        // Check if we already have a background starfield or if BackgroundStarfield component exists
+        if (transform.Find("BackgroundStars") != null || GetComponent<BackgroundStarfield>() != null)
             return;
             
-        // Create a new GameObject for background stars
-        GameObject backgroundObj = new GameObject("BackgroundStars");
-        backgroundObj.transform.SetParent(transform);
+        // Use the dedicated BackgroundStarfield component instead of creating another StarManager
+        BackgroundStarfield backgroundStarfield = gameObject.AddComponent<BackgroundStarfield>();
         
-        // Add a StarManager component
-        StarManager backgroundStarManager = backgroundObj.AddComponent<StarManager>();
-        
-        // Copy settings from main star manager
-        if (starManager != null)
-        {
-            backgroundStarManager.starMaterial = starManager.starMaterial;
-            backgroundStarManager.starMesh = starManager.starMesh;
-            backgroundStarManager.emissionTint = starManager.emissionTint;
-            backgroundStarManager.blurAmount = starManager.blurAmount;
-            backgroundStarManager.emissionEnergy = starManager.emissionEnergy * 0.1f; // Dimmer
-            backgroundStarManager.billboardSizeDeg = starManager.billboardSizeDeg * 0.5f; // Smaller
-        }
-        
-        // Create random background stars
-        List<Star> backgroundStars = new List<Star>(1000);
-        float radius = 2000f;
-        
-        for (int i = 0; i < 1000; i++)
-        {
-            Vector3 randomDir = Random.onUnitSphere;
-            Vector3 position = randomDir * radius;
-            
-            float luminosity = Random.Range(0.05f, 0.5f);
-            float temperature = Random.Range(3000f, 12000f);
-            
-            Star star = new Star(position, luminosity, temperature);
-            backgroundStars.Add(star);
-        }
-        
-        backgroundStarManager.SetStarList(backgroundStars);
+        // Configure background starfield properties
+        backgroundStarfield.StarCount = 2000;
+        backgroundStarfield.SphereRadius = 5000f;
+        backgroundStarfield.MinStarSize = 1f;
+        backgroundStarfield.MaxStarSize = 3f;
     }
     
     private void OnStarClicked(Star star, Vector3 screenPos)
     {
-        StarSystem selectedSystem = FindSystemForStar(star);
+        // Delegate to the StarSelectionHandler if it exists, otherwise handle locally
+        StarSelectionHandler selectionHandler = GetComponent<StarSelectionHandler>();
+        if (selectionHandler != null)
+        {
+            // Let the dedicated handler deal with it
+            return;
+        }
         
+        // Fallback to local handling
+        StarSystem selectedSystem = FindSystemForStar(star);
         if (selectedSystem != null && _systemInfoController != null)
         {
             _systemInfoController.ShowSystemInfo(selectedSystem);
@@ -272,19 +327,24 @@ public class GalaxyView : MonoBehaviour
     
     private void OnStarDoubleClicked(Star star, Vector3 screenPos)
     {
-        StarSystem selectedSystem = FindSystemForStar(star);
+        // Delegate to the StarSelectionHandler if it exists, otherwise handle locally
+        StarSelectionHandler selectionHandler = GetComponent<StarSelectionHandler>();
+        if (selectionHandler != null)
+        {
+            // Let the dedicated handler deal with it
+            return;
+        }
         
+        // Fallback to local handling
+        StarSystem selectedSystem = FindSystemForStar(star);
         if (selectedSystem != null && _cameraController != null)
         {
-            // Focus camera on the selected system
             _cameraController.LookAtPoint(selectedSystem.Position * positionScale);
-            
-            // Here you could also implement a zoom-in effect
             Debug.Log($"Double-clicked on system: {selectedSystem.ID}");
         }
     }
     
-    private StarSystem FindSystemForStar(Star star)
+    public StarSystem FindSystemForStar(Star star)
     {
         if (_galaxyData == null || _galaxyData.Count == 0)
             return null;
@@ -307,15 +367,18 @@ public class GalaxyView : MonoBehaviour
         }
         
         // Use a distance threshold to ensure we found the right system
-        float threshold = 0.1f * 0.1f; // Square the threshold
+        float threshold = 1.0f; // Increase threshold to match StarSelectionHandler
         
-        if (closestDistSq <= threshold)
+        if (closestDistSq <= threshold * threshold)
         {
             return closestSystem;
         }
         
         return null;
     }
+    
+    // Public property to expose galaxy data to other components
+    public List<StarSystem> GalaxyData => _galaxyData;
     
     private void OnDestroy()
     {

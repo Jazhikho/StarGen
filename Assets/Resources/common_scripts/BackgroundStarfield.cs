@@ -20,7 +20,11 @@ public class BackgroundStarfield : MonoBehaviour
     
     void Start()
     {
-        CreateStarfield();
+        // Only create starfield if we don't already have a particle system
+        if (_particleSystem == null)
+        {
+            CreateStarfield();
+        }
     }
     
     private void CreateStarfield()

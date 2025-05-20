@@ -305,47 +305,6 @@ MonoBehaviour:
   clickCamera: {fileID: 7096785666374767225}
   clickRadius: 0.01
   debugClicks: 1
---- !u!1 &7633696957945071554
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 9159723950325967708}
-  - component: {fileID: 6988947805758493962}
-  m_Layer: 0
-  m_Name: BackgroundStarfield
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &9159723950325967708
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7633696957945071554}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 642.0118, y: 277.2241, z: -169.5911}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8192444066016823101}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!45 &6988947805758493962
-Skybox:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7633696957945071554}
-  m_Enabled: 1
-  m_CustomSkybox: {fileID: 2100000, guid: 09664363b27b82a4bba3c9339b4eec46, type: 2}
 --- !u!1 &8531318099139992017
 GameObject:
   m_ObjectHideFlags: 0
@@ -527,7 +486,6 @@ Transform:
   m_Children:
   - {fileID: 5157119249434651138}
   - {fileID: 3883666094927358594}
-  - {fileID: 9159723950325967708}
   - {fileID: 8406563877731085164}
   - {fileID: 507441174630339550}
   m_Father: {fileID: 0}

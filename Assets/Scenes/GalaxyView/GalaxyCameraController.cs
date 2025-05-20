@@ -114,13 +114,29 @@ public class GalaxyCameraController : MonoBehaviour
     
     public void ResetView()
     {
-        // Position the camera at a good viewing angle
-        float distance = Mathf.Max(galaxySize.x, galaxySize.y, galaxySize.z) * 1.5f;
-        targetPosition = galaxyCenter + new Vector3(0, distance * 0.3f, distance);
+        // Position the camera INSIDE the starfield, at a reasonable distance
+        float maxDimension = Mathf.Max(galaxySize.x, galaxySize.y, galaxySize.z);
+        float distance = maxDimension * 0.4f; // Much closer - inside the starfield
+        distance = Mathf.Max(distance, 50f); // Ensure minimum distance
+        
+        // Position camera inside the galaxy bounds, looking towards center with some offset
+        Vector3 offset = new Vector3(
+            galaxySize.x * 0.3f,  // Offset to the side
+            galaxySize.y * 0.2f,  // Slight elevation
+            galaxySize.z * 0.3f   // Forward offset
+        );
+        
+        targetPosition = galaxyCenter + offset;
         
         // Look at galaxy center
         Vector3 direction = (galaxyCenter - targetPosition).normalized;
         targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+        
+        // Apply immediately for initial setup
+        transform.position = targetPosition;
+        transform.rotation = targetRotation;
+        
+        Debug.Log($"Camera reset to position: {targetPosition}, looking at: {galaxyCenter}, galaxy size: {galaxySize}, distance from center: {Vector3.Distance(targetPosition, galaxyCenter)}");
     }
     
     public void LookAtPoint(Vector3 point)
