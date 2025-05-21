@@ -277,11 +277,11 @@ MonoBehaviour:
   starMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
   emissionTint: {r: 0.252, g: 0.157, b: 0.292, a: 1}
   blurAmount: 0.5
-  emissionEnergy: 1e+10
-  billboardSizeDeg: 18
-  luminosityCap: 4000000
+  emissionEnergy: 2e+10
+  billboardSizeDeg: 15
+  luminosityCap: 400000
   metersPerLightyear: 100
-  colorGamma: 3
+  colorGamma: 5
   textureGamma: 1000
   clampOutput: 0
   minSizeRatio: 0.003
@@ -290,10 +290,10 @@ MonoBehaviour:
   debugShowRects: 0
   emissionTexture: {fileID: 2800000, guid: 2b1a36bb9f8fa2a499939a5ee0616908, type: 3}
   logDebugInfo: 0
-  enableLOD: 0
-  lodNearDistance: 100
-  lodFarDistance: 1000
-  maxRenderedStars: 10000
+  enableLOD: 1
+  lodNearDistance: 1000
+  lodFarDistance: 10000
+  maxRenderedStars: 100000
   enableFrustumCulling: 1
 --- !u!114 &6715419730437033012
 MonoBehaviour:
@@ -469,6 +469,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8192444066016823101}
   - component: {fileID: 7334175413253702100}
+  - component: {fileID: 1796971929556680553}
   m_Layer: 0
   m_Name: GalaxyView
   m_TagString: Untagged
@@ -512,6 +513,15 @@ MonoBehaviour:
   starClickDetector: {fileID: 6715419730437033012}
   starContainer: {fileID: 507441174630339550}
   systemInfoPanel: {fileID: 1723622781394717156}
-  positionScale: 5
-  maxVisibleStars: 50000
+  positionScale: 20
+  maxVisibleStars: 1000000
   starMaterial: {fileID: 2100000, guid: 27eeeafb7a7c5214b9d85ace34677c37, type: 2}
+--- !u!45 &1796971929556680553
+Skybox:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9083402101732957301}
+  m_Enabled: 1
+  m_CustomSkybox: {fileID: 2100000, guid: 09664363b27b82a4bba3c9339b4eec46, type: 2}

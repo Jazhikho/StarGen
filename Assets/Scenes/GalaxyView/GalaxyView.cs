@@ -17,7 +17,7 @@ public class GalaxyView : MonoBehaviour
     public GameObject systemInfoPanel;
     
     [Header("Star Rendering")]
-    public float positionScale = 5.0f;
+    public float positionScale = 50.0f;
     public int maxVisibleStars = 50000;
     public Material starMaterial; // Optional if not referenced in StarManager
     

@@ -451,19 +451,7 @@ namespace Starlight
             for (int i = 0; i < _stars.Count; i++)
             {
                 Star star = _stars[i];
-                
-                // Frustum culling
-                if (enableFrustumCulling && frustumPlanes != null)
-                {
-                    if (!GeometryUtility.TestPlanesAABB(frustumPlanes, new Bounds(star.Position, Vector3.one * 0.1f)))
-                        continue;
-                }
-                
-                // Distance culling for performance
-                float distance = Vector3.Distance(cameraPos, star.Position);
-                if (distance > lodFarDistance * 2f)
-                    continue;
-                
+                               
                 visibleIndices.Add(i);
                 
                 // Limit total rendered stars for performance
