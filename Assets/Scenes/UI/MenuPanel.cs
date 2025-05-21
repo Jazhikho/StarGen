@@ -81,7 +81,7 @@ public class MenuPanel : MonoBehaviour
         toolsDropdown.onValueChanged.AddListener(OnToolSelected);
 
         // Set initial visibility
-        SetContext(MenuContext.None);
+        this.gameObject.SetActive(false);
     }
 
     public void SetContext(MenuContext context)
@@ -100,7 +100,7 @@ public class MenuPanel : MonoBehaviour
         List<string> optionLabels = new List<string>();
 
         // Add default option
-        optionLabels.Add("Select Tool...");
+        optionLabels.Add("Tools");
 
         switch (_currentContext)
         {
@@ -134,12 +134,12 @@ public class MenuPanel : MonoBehaviour
         }
 
         toolsDropdown.AddOptions(optionLabels);
-        toolsDropdown.value = 0; // Reset to "Select Tool..."
+        toolsDropdown.value = 0; // Reset to "Tools"
     }
 
     private void OnToolSelected(int index)
     {
-        if (index == 0) // "Select Tool..." option
+        if (index == 0) // "Tools" option
         {
             return;
         }

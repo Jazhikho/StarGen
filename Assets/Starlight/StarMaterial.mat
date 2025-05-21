@@ -62,7 +62,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionTexture:
-        m_Texture: {fileID: 2800000, guid: 977ca3964f1031042a9ed4e925556f09, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2b1a36bb9f8fa2a499939a5ee0616908, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -102,7 +102,7 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
-    - _BillboardSizeDeg: 45
+    - _BillboardSizeDeg: 18
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BlurAmount: 0.5
@@ -118,7 +118,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EmissionEnergy: 2e+10
+    - _EmissionEnergy: 1e+10
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0

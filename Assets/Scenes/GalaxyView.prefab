@@ -60,7 +60,7 @@ RectTransform:
   m_GameObject: {fileID: 1723622781394717156}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6574366567656399383}
@@ -69,7 +69,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0, y: 0}
 --- !u!223 &6531588754011979076
 Canvas:
@@ -185,10 +185,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 8406563877731085164}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -30}
-  m_SizeDelta: {x: 200, y: -60}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 1, y: 100}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!222 &1866243511557628694
 CanvasRenderer:
@@ -277,8 +277,8 @@ MonoBehaviour:
   starMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
   emissionTint: {r: 0.252, g: 0.157, b: 0.292, a: 1}
   blurAmount: 0.5
-  emissionEnergy: 2e+10
-  billboardSizeDeg: 45
+  emissionEnergy: 1e+10
+  billboardSizeDeg: 18
   luminosityCap: 4000000
   metersPerLightyear: 100
   colorGamma: 3
@@ -288,8 +288,13 @@ MonoBehaviour:
   maxLuminosity: 100000
   scalingGamma: 0.45
   debugShowRects: 0
-  emissionTexture: {fileID: 2800000, guid: 977ca3964f1031042a9ed4e925556f09, type: 3}
+  emissionTexture: {fileID: 2800000, guid: 2b1a36bb9f8fa2a499939a5ee0616908, type: 3}
   logDebugInfo: 0
+  enableLOD: 0
+  lodNearDistance: 100
+  lodFarDistance: 1000
+  maxRenderedStars: 10000
+  enableFrustumCulling: 1
 --- !u!114 &6715419730437033012
 MonoBehaviour:
   m_ObjectHideFlags: 0

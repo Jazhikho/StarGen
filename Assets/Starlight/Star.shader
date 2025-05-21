@@ -72,6 +72,12 @@ Shader "Starlight/Star"
             float _DebugShowRects;
             
             // Star-specific properties from MaterialPropertyBlock
+            // Per-instance arrays
+            #ifdef INSTANCING_ON
+            float4 _StarColors[1023]; // Array of star colors for instancing
+            float _StarLuminosities[1023]; // Array of star luminosities for instancing
+            #endif
+            // Fallback properties
             float4 _StarColor;
             float _StarLuminosity;
             
@@ -85,6 +91,17 @@ Shader "Starlight/Star"
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 
+                // Get instance ID for accessing per-instance data
+                uint instanceID = 0;
+                float4 starColor = _StarColor;
+                float starLuminosity = _StarLuminosity;
+                
+                #ifdef INSTANCING_ON
+                instanceID = unity_InstanceID;
+                starColor = _StarColors[instanceID];
+                starLuminosity = _StarLuminosities[instanceID];
+                #endif
+                
                 // Get star position from object to world matrix
                 float4 worldPos = mul(unity_ObjectToWorld, float4(0,0,0,1));
                 
@@ -97,11 +114,13 @@ Shader "Starlight/Star"
                 // Calculate luminosity based on distance
                 float dimming = 1.0 / max(dist_adj * dist_adj, 0.0001);
                 float emission = LUMINOSITY_SUN * dimming;
-                float luminosity = _StarLuminosity * _EmissionEnergy * emission;
+                // Use per-instance luminosity from the array
+                float luminosity = starLuminosity * _EmissionEnergy * emission;
                 luminosity = min(luminosity, _LuminosityCap);
                 
                 // Calculate star color based on temperature
-                o.color = pow(abs(_StarColor.rgb), _ColorGamma) * luminosity;
+                // Use per-instance color from the array
+                o.color = pow(abs(starColor.rgb), _ColorGamma) * luminosity;
                 
                 // Calculate scaling for PSF texture
                 float scale_ratio = saturate(luminosity / _MaxLuminosity);

@@ -9,12 +9,12 @@ namespace Starlight
         [Header("Appearance")]
         public Material starMaterial;
         public Mesh starMesh;
-        public Color emissionTint = new Color(0.252f, 0.157f, 0.292f);
+        public Color emissionTint = new Color(1,1,1);
         [Range(0f, 1f)]
         public float blurAmount = 0.5f;
         public float emissionEnergy = 2e+10f;
         [Range(0f, 90f)]
-        public float billboardSizeDeg = 45f;
+        public float billboardSizeDeg = 18f;
         public float luminosityCap = 4e+06f;
         public float metersPerLightyear = 100f;
         [Range(0f, 10f)]
@@ -69,6 +69,9 @@ namespace Starlight
         // For star properties
         private static readonly int StarColorProperty = Shader.PropertyToID("_StarColor");
         private static readonly int StarLuminosityProperty = Shader.PropertyToID("_StarLuminosity");
+        // Arrays for per-instance star properties
+        private static readonly int StarColorsProperty = Shader.PropertyToID("_StarColors");
+        private static readonly int StarLuminositiesProperty = Shader.PropertyToID("_StarLuminosities");
         
         void OnEnable()
         {
@@ -332,8 +335,8 @@ namespace Starlight
                 }
                 
                 // Set per-instance data arrays in the property block
-                _propertyBlock.SetVectorArray("_StarColors", colors);
-                _propertyBlock.SetFloatArray("_StarLuminosities", luminosities);
+                _propertyBlock.SetVectorArray(StarColorsProperty, colors);
+                _propertyBlock.SetFloatArray(StarLuminositiesProperty, luminosities);
                 
                 // Ensure textures are properly set
                 if (emissionTexture != null)
