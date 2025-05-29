@@ -2,11 +2,11 @@
 using UnityEditor;
 
 [CustomEditor(typeof(PlanetModel))]
-public class PlanetEditor : Editor {
+public class PlanetEditor : UnityEditor.Editor {
 
     PlanetModel planet;
-    Editor shapeEditor;
-    Editor colorEditor;
+    UnityEditor.Editor shapeEditor;
+    UnityEditor.Editor colorEditor;
 
 	public override void OnInspectorGUI()
 	{
@@ -28,7 +28,7 @@ public class PlanetEditor : Editor {
         DrawSettingsEditor(planet.colorSettings, planet.OnColorSettingsUpdated, ref planet.colorSettingsFoldout, ref colorEditor);
 	}
 
-    void DrawSettingsEditor(Object settings, System.Action onSettingsUpdated, ref bool foldout, ref Editor editor)
+    void DrawSettingsEditor(Object settings, System.Action onSettingsUpdated, ref bool foldout, ref UnityEditor.Editor editor)
     {
         if (settings != null)
         {

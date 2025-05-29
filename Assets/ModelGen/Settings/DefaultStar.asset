@@ -35,13 +35,13 @@ MonoBehaviour:
       weightMultiplier: 0.8
   surfaceVariation: 0.05
   starMaterial: {fileID: 2100000, guid: 6734485f711da304ea3b7f7762ac793a, type: 2}
-  starColor: {r: 0.7028302, g: 0.8044997, b: 1, a: 1}
+  starColor: {r: 1, g: 1, b: 1, a: 0}
   emissionStrength: 2
   hasCorona: 1
   coronaColor: {r: 1, g: 0.5, b: 0, a: 0.3}
   coronaSize: 0.99
   lightRange: 100
-  lightIntensity: 2
+  lightIntensity: 1.3023349
   animateSurface: 1
   activitySpeed: 103.3
   intensityFlicker:

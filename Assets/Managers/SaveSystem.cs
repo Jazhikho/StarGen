@@ -28,11 +28,21 @@ public static class SaveSystem
     /// </summary>
     public static void SaveGalaxy(string saveName)
     {
-        var dataStore = GalaxyDataStore.Instance;
+        SaveGalaxy(saveName, GalaxyDataStore.Instance);
+    }
+
+    /// <summary>
+    /// Saves the specified galaxy to disk
+    /// </summary>
+    /// <param name="saveName">Name of the save</param>
+    /// <param name="dataStore">Galaxy data store to save</param>
+    /// <returns>True if save was successful, false otherwise</returns>
+    public static bool SaveGalaxy(string saveName, GalaxyDataStore dataStore)
+    {
         if (dataStore == null || !dataStore.HasGalaxyData())
         {
             Debug.LogError("No galaxy data to save");
-            return;
+            return false;
         }
         
         // Create save directory if it doesn't exist
@@ -90,10 +100,12 @@ public static class SaveSystem
             dataStore.LastSaveDate = DateTime.Now;
             
             Debug.Log($"Galaxy saved successfully to {galaxyDirectory}");
+            return true;
         }
         catch (Exception ex)
         {
             Debug.LogError($"Error saving galaxy: {ex.Message}");
+            return false;
         }
     }
     
@@ -101,6 +113,17 @@ public static class SaveSystem
     /// Loads a galaxy from disk
     /// </summary>
     public static bool LoadGalaxy(string saveName)
+    {
+        return LoadGalaxy(saveName, GalaxyDataStore.Instance);
+    }
+
+    /// <summary>
+    /// Loads a galaxy from disk into the specified data store
+    /// </summary>
+    /// <param name="saveName">Name of the save to load</param>
+    /// <param name="dataStore">Galaxy data store to load into</param>
+    /// <returns>True if load was successful, false otherwise</returns>
+    public static bool LoadGalaxy(string saveName, GalaxyDataStore dataStore)
     {
         string galaxyDirectory = Path.Combine(SaveDirectory, saveName);
         
@@ -112,8 +135,6 @@ public static class SaveSystem
         
         try
         {
-            var dataStore = GalaxyDataStore.Instance;
-            
             // Clear existing data
             dataStore.ClearGalaxyData();
             
@@ -157,11 +178,6 @@ public static class SaveSystem
             }
             
             Debug.Log($"Galaxy loaded successfully from {galaxyDirectory}");
-            
-            // Emit a signal that the galaxy was loaded
-            var emitterObject = new GameObject("GalaxyLoadSignalEmitter");
-            var signalEmitter = emitterObject.AddComponent<GalaxyLoadSignalEmitter>();
-            signalEmitter.EmitGalaxyLoaded(saveName);
             
             return true;
         }
@@ -218,7 +234,7 @@ public static class SaveSystem
     /// <summary>
     /// Deletes a saved galaxy
     /// </summary>
-    public static bool DeleteSavedGalaxy(string saveName)
+    public static bool DeleteSave(string saveName)
     {
         string galaxyDirectory = Path.Combine(SaveDirectory, saveName);
         
@@ -238,6 +254,9 @@ public static class SaveSystem
             return false;
         }
     }
+    
+    // Alias for backward compatibility
+    public static bool DeleteSavedGalaxy(string saveName) => DeleteSave(saveName);
     
     /// <summary>
     /// Information about a saved galaxy

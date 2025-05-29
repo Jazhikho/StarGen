@@ -5,7 +5,7 @@ namespace SimpleKeplerOrbits
 {
 	[CustomEditor(typeof(EllipticInterceptionSolver), isFallback = false)]
 	[CanEditMultipleObjects]
-	public class EllipticInterceptionSolverEditor : Editor
+	public class EllipticInterceptionSolverEditor : UnityEditor.Editor
 	{
 		private EllipticInterceptionSolver _target;
 

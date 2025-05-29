@@ -23,7 +23,7 @@ public abstract class CelestialBodyModel : MonoBehaviour
     
     public abstract void GenerateCelestialBody();
 
-    protected void InitializeMeshComponents()
+    public void InitializeMeshComponents()
     {
         if (meshFilters == null || meshFilters.Length == 0)
         {
@@ -34,12 +34,16 @@ public abstract class CelestialBodyModel : MonoBehaviour
         {
             if (meshFilters[i] == null)
             {
-                GameObject meshObj = new GameObject("mesh");
+                GameObject meshObj = new GameObject($"Face_{i}");
                 meshObj.transform.parent = transform;
 
-                meshObj.AddComponent<MeshRenderer>();
                 meshFilters[i] = meshObj.AddComponent<MeshFilter>();
                 meshFilters[i].sharedMesh = new Mesh();
+                meshFilters[i].sharedMesh.name = $"Face_{i}_Mesh";
+
+                // Add MeshRenderer
+                MeshRenderer renderer = meshObj.AddComponent<MeshRenderer>();
+                // Material will be set later in the specific model classes
             }
         }
     }

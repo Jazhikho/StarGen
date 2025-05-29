@@ -3,22 +3,18 @@ using System;
 using System.Collections.Generic;
 
 /// <summary>
-/// Manages all dialog instantiation and event handling
+/// Manages all dialog visibility and event handling
 /// </summary>
 public class DialogManager : MonoBehaviour
 {
-    // Dialog prefabs (assign in Inspector)
-    [Header("Dialog Prefabs")]
-    [SerializeField] private GameObject _generationParamsDialogPrefab;
-    [SerializeField] private GameObject _generationProgressWindowPrefab;
-    [SerializeField] private GameObject _saveDialogPrefab;
-    [SerializeField] private GameObject _loadDialogPrefab;
+    // Dialog GameObject references (assign in Inspector)
+    [Header("Dialog Objects")]
+    [SerializeField] private GameObject _generationParamsDialog;
+    [SerializeField] private GameObject _generationProgressWindow;
+    [SerializeField] private GameObject _saveDialog;
+    [SerializeField] private GameObject _loadDialog;
     
-    // Dialog container (assign in Inspector)
-    [Header("References")]
-    [SerializeField] private Transform _dialogContainer;
-    
-    // Current dialog references
+    // Current active dialog references
     private GameObject _currentDialog;
     private GameObject _progressWindow;
     
@@ -32,9 +28,18 @@ public class DialogManager : MonoBehaviour
     public event Action LoadCompleted;
     public event Action LoadCanceled;
     #endregion
+
+    private void Start()
+    {
+        // Make sure all dialogs are hidden initially
+        if (_generationParamsDialog != null) _generationParamsDialog.SetActive(false);
+        if (_generationProgressWindow != null) _generationProgressWindow.SetActive(false);
+        if (_saveDialog != null) _saveDialog.SetActive(false);
+        if (_loadDialog != null) _loadDialog.SetActive(false);
+    }
     
     /// <summary>
-    /// Initialize the dialog manager with required prefabs
+    /// Legacy initialization for backward compatibility
     /// </summary>
     public void Initialize(
         GameObject generationParamsDialogPrefab,
@@ -43,11 +48,7 @@ public class DialogManager : MonoBehaviour
         GameObject loadDialogPrefab,
         Transform dialogContainer)
     {
-        _generationParamsDialogPrefab = generationParamsDialogPrefab;
-        _generationProgressWindowPrefab = generationProgressWindowPrefab;
-        _saveDialogPrefab = saveDialogPrefab;
-        _loadDialogPrefab = loadDialogPrefab;
-        _dialogContainer = dialogContainer;
+        Debug.LogWarning("DialogManager: Using legacy Initialize method, child GameObjects should be configured instead");
     }
     
     /// <summary>
@@ -55,12 +56,27 @@ public class DialogManager : MonoBehaviour
     /// </summary>
     public void ShowGenerationParametersDialog()
     {
-        DestroyExistingDialogs();
+        HideAllDialogs();
         
-        _currentDialog = Instantiate(_generationParamsDialogPrefab, _dialogContainer);
+        if (_generationParamsDialog == null)
+        {
+            Debug.LogError("DialogManager: _generationParamsDialog is null");
+            return;
+        }
+        
+        _generationParamsDialog.SetActive(true);
+        _currentDialog = _generationParamsDialog;
+        
         GenerationParametersDialog paramsDialog = _currentDialog.GetComponent<GenerationParametersDialog>();
-        paramsDialog.GenerationConfirmed += OnGenerationParametersConfirmed;
-        paramsDialog.GenerationCanceled += OnGenerationParametersCanceled;
+        if (paramsDialog != null)
+        {
+            paramsDialog.GenerationConfirmed += OnGenerationParametersConfirmed;
+            paramsDialog.GenerationCanceled += OnGenerationParametersCanceled;
+        }
+        else
+        {
+            Debug.LogError("DialogManager: GenerationParametersDialog component not found on dialog");
+        }
     }
     
     /// <summary>
@@ -68,13 +84,28 @@ public class DialogManager : MonoBehaviour
     /// </summary>
     public void ShowGenerationProgressDialog(Dictionary<string, object> parameters)
     {
-        DestroyExistingDialogs();
+        HideAllDialogs();
         
-        _progressWindow = Instantiate(_generationProgressWindowPrefab, _dialogContainer);
+        if (_generationProgressWindow == null)
+        {
+            Debug.LogError("DialogManager: _generationProgressWindow is null");
+            return;
+        }
+        
+        _generationProgressWindow.SetActive(true);
+        _progressWindow = _generationProgressWindow;
+        
         GenerationProgressDialog progressDialog = _progressWindow.GetComponent<GenerationProgressDialog>();
-        progressDialog.Initialize(parameters);
-        progressDialog.GenerationCompleted += OnGenerationCompleted;
-        progressDialog.GenerationCanceled += OnGenerationCanceled;
+        if (progressDialog != null)
+        {
+            progressDialog.Initialize(parameters);
+            progressDialog.GenerationCompleted += OnGenerationCompleted;
+            progressDialog.GenerationCanceled += OnGenerationCanceled;
+        }
+        else
+        {
+            Debug.LogError("DialogManager: GenerationProgressDialog component not found on dialog");
+        }
     }
     
     /// <summary>
@@ -82,13 +113,66 @@ public class DialogManager : MonoBehaviour
     /// </summary>
     public void ShowSaveDialog()
     {
-        if (!GalaxyDataStore.Instance.HasGalaxyData())
-            return;
+        try
+        {
+            // Ensure GalaxyDataStore exists
+            if (GalaxyDataStore.Instance == null)
+            {
+                Debug.LogWarning("DialogManager: GalaxyDataStore.Instance is null, creating instance");
+                GameObject galaxyDataStore = new GameObject("GalaxyDataStore");
+                var dataStoreComponent = galaxyDataStore.AddComponent<GalaxyDataStore>();
+                DontDestroyOnLoad(galaxyDataStore);
+                
+                // Verify creation was successful
+                if (GalaxyDataStore.Instance == null)
+                {
+                    Debug.LogError("DialogManager: Failed to create GalaxyDataStore instance");
+                    return;
+                }
+            }
             
-        GameObject saveDialog = Instantiate(_saveDialogPrefab, _dialogContainer);
-        SaveDialog saveDialogComponent = saveDialog.GetComponent<SaveDialog>();
-        saveDialogComponent.SaveCompleted += OnSaveCompleted;
-        saveDialogComponent.SaveCanceled += OnSaveCanceled;
+            // Cache the instance to avoid race conditions
+            var dataStore = GalaxyDataStore.Instance;
+            if (dataStore == null)
+            {
+                Debug.LogError("DialogManager: GalaxyDataStore.Instance became null unexpectedly");
+                return;
+            }
+            
+            // Check if there's data to save
+            if (!dataStore.HasGalaxyData())
+            {
+                Debug.LogWarning("No galaxy data to save");
+                return;
+            }
+            
+            HideAllDialogs();
+            
+            if (_saveDialog == null)
+            {
+                Debug.LogError("DialogManager: _saveDialog is null");
+                return;
+            }
+            
+            _saveDialog.SetActive(true);
+            SaveDialog saveDialogComponent = _saveDialog.GetComponent<SaveDialog>();
+            
+            if (saveDialogComponent == null)
+            {
+                Debug.LogError("DialogManager: SaveDialog component not found on dialog");
+                _saveDialog.SetActive(false);
+                return;
+            }
+            
+            // Reset the dialog and connect events
+            saveDialogComponent.ResetDialog();
+            saveDialogComponent.SaveCompleted += OnSaveCompleted;
+            saveDialogComponent.SaveCanceled += OnSaveCanceled;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"DialogManager: Exception in ShowSaveDialog: {ex.Message}\n{ex.StackTrace}");
+        }
     }
     
     /// <summary>
@@ -96,10 +180,51 @@ public class DialogManager : MonoBehaviour
     /// </summary>
     public void ShowLoadDialog()
     {
-        GameObject loadDialog = Instantiate(_loadDialogPrefab, _dialogContainer);
-        LoadDialog loadDialogComponent = loadDialog.GetComponent<LoadDialog>();
-        loadDialogComponent.LoadCompleted += OnLoadCompleted;
-        loadDialogComponent.LoadCanceled += OnLoadCanceled;
+        try
+        {
+            // Ensure GalaxyDataStore exists
+            if (GalaxyDataStore.Instance == null)
+            {
+                Debug.LogWarning("DialogManager: GalaxyDataStore.Instance is null, creating instance");
+                GameObject galaxyDataStore = new GameObject("GalaxyDataStore");
+                var dataStoreComponent = galaxyDataStore.AddComponent<GalaxyDataStore>();
+                DontDestroyOnLoad(galaxyDataStore);
+                
+                // Verify creation was successful
+                if (GalaxyDataStore.Instance == null)
+                {
+                    Debug.LogError("DialogManager: Failed to create GalaxyDataStore instance");
+                    return;
+                }
+            }
+            
+            HideAllDialogs();
+            
+            if (_loadDialog == null)
+            {
+                Debug.LogError("DialogManager: _loadDialog is null");
+                return;
+            }
+            
+            _loadDialog.SetActive(true);
+            LoadDialog loadDialogComponent = _loadDialog.GetComponent<LoadDialog>();
+            
+            if (loadDialogComponent == null)
+            {
+                Debug.LogError("DialogManager: LoadDialog component not found on dialog");
+                _loadDialog.SetActive(false);
+                return;
+            }
+            
+            // Reset the dialog and connect events
+            loadDialogComponent.ResetDialog();
+            loadDialogComponent.LoadCompleted += OnLoadCompleted;
+            loadDialogComponent.LoadCanceled += OnLoadCanceled;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"DialogManager: Exception in ShowLoadDialog: {ex.Message}\n{ex.StackTrace}");
+        }
     }
     
     /// <summary>
@@ -109,26 +234,32 @@ public class DialogManager : MonoBehaviour
     {
         if (_progressWindow != null)
         {
-            Destroy(_progressWindow);
+            _progressWindow.SetActive(false);
             _progressWindow = null;
         }
     }
     
     /// <summary>
-    /// Destroy all existing dialogs
+    /// Hide all dialog windows
+    /// </summary>
+    private void HideAllDialogs()
+    {
+        if (_generationParamsDialog != null) _generationParamsDialog.SetActive(false);
+        if (_generationProgressWindow != null) _generationProgressWindow.SetActive(false);
+        if (_saveDialog != null) _saveDialog.SetActive(false);
+        if (_loadDialog != null) _loadDialog.SetActive(false);
+        
+        // Unset current references
+        _currentDialog = null;
+        _progressWindow = null;
+    }
+    
+    /// <summary>
+    /// Legacy method for backwards compatibility
     /// </summary>
     private void DestroyExistingDialogs()
     {
-        foreach (Transform child in _dialogContainer)
-        {
-            if (child.GetComponent<GenerationParametersDialog>() != null ||
-                child.GetComponent<GenerationProgressDialog>() != null ||
-                child.GetComponent<SaveDialog>() != null ||
-                child.GetComponent<LoadDialog>() != null)
-            {
-                Destroy(child.gameObject);
-            }
-        }
+        HideAllDialogs();
     }
     
     #region Event Handlers
@@ -155,21 +286,25 @@ public class DialogManager : MonoBehaviour
     private void OnSaveCompleted()
     {
         SaveCompleted?.Invoke();
+        if (_saveDialog != null) _saveDialog.SetActive(false);
     }
     
     private void OnSaveCanceled()
     {
         SaveCanceled?.Invoke();
+        if (_saveDialog != null) _saveDialog.SetActive(false);
     }
     
     private void OnLoadCompleted()
     {
         LoadCompleted?.Invoke();
+        if (_loadDialog != null) _loadDialog.SetActive(false);
     }
     
     private void OnLoadCanceled()
     {
         LoadCanceled?.Invoke();
+        if (_loadDialog != null) _loadDialog.SetActive(false);
     }
     #endregion
 }

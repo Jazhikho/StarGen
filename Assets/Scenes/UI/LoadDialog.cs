@@ -17,15 +17,31 @@ public class LoadDialog : MonoBehaviour
     
     private SaveSystem.SaveInfo selectedSave;
     
-    void Start()
+    private void Awake()
     {
         // Hook up button events
         cancelButton.onClick.AddListener(HandleCancel);
         deleteButton.onClick.AddListener(HandleDelete);
-        deleteButton.interactable = false;
-        
-        // Populate save list
-        PopulateSaveList();
+    }
+    
+    /// <summary>
+    /// Reset the dialog to its initial state
+    /// </summary>
+    public void ResetDialog()
+    {
+        try
+        {
+            // Reset selection state
+            selectedSave = null;
+            deleteButton.interactable = false;
+            
+            // Populate save list
+            PopulateSaveList();
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"LoadDialog: Exception in ResetDialog: {ex.Message}");
+        }
     }
     
     private void PopulateSaveList()
@@ -69,36 +85,68 @@ public class LoadDialog : MonoBehaviour
     
     private void SelectSave(SaveSystem.SaveInfo save)
     {
-        selectedSave = save;
-        deleteButton.interactable = true;
-        
-        // Load the selected galaxy
-        SaveSystem.LoadGalaxy(save.SaveName);
-        LoadCompleted?.Invoke();
-        
-        // Close dialog
-        Destroy(gameObject);
+        try
+        {
+            selectedSave = save;
+            deleteButton.interactable = true;
+            
+            // Check if GalaxyDataStore exists
+            if (GalaxyDataStore.Instance == null)
+            {
+                Debug.LogError("LoadDialog: GalaxyDataStore.Instance is null");
+                return;
+            }
+            
+            // Load the selected galaxy
+            bool success = SaveSystem.LoadGalaxy(save.SaveName, GalaxyDataStore.Instance);
+            
+            if (success)
+            {
+                // Emit event that galaxy was loaded successfully
+                GalaxyLoadSignalEmitter emitter = GalaxyLoadSignalEmitter.GetInstance();
+                if (emitter != null)
+                {
+                    emitter.EmitGalaxyLoaded(save.SaveName);
+                }
+                
+                LoadCompleted?.Invoke();
+                // Dialog will be hidden by the DialogManager
+            }
+            else
+            {
+                Debug.LogError($"Failed to load galaxy: {save.SaveName}");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"LoadDialog: Exception in SelectSave: {ex.Message}\n{ex.StackTrace}");
+        }
     }
     
     private void HandleDelete()
     {
-        if (selectedSave != null)
+        try
         {
-            if (SaveSystem.DeleteSavedGalaxy(selectedSave.SaveName))
+            if (selectedSave != null)
             {
-                // Refresh save list
-                PopulateSaveList();
-                selectedSave = null;
-                deleteButton.interactable = false;
+                if (SaveSystem.DeleteSave(selectedSave.SaveName))
+                {
+                    // Refresh save list
+                    PopulateSaveList();
+                    selectedSave = null;
+                    deleteButton.interactable = false;
+                }
             }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"LoadDialog: Exception in HandleDelete: {ex.Message}");
         }
     }
     
     private void HandleCancel()
     {
         LoadCanceled?.Invoke();
-        
-        // Close dialog
-        Destroy(gameObject);
+        // Dialog will be hidden by the DialogManager
     }
 }

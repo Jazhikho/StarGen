@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &9124965500196651052
+--- !u!1 &3322369337761475646
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,22 +8,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 819010151506770742}
-  - component: {fileID: 6049286809123175516}
+  - component: {fileID: 7722690928048900812}
+  - component: {fileID: 8185858659407637773}
   m_Layer: 0
-  m_Name: SaveDialog
+  m_Name: Planet Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &819010151506770742
+--- !u!4 &7722690928048900812
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9124965500196651052}
+  m_GameObject: {fileID: 3322369337761475646}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -32,18 +32,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6049286809123175516
+--- !u!114 &8185858659407637773
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9124965500196651052}
+  m_GameObject: {fileID: 3322369337761475646}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 13e7eac6f00a3ed44a5ddccc5acb8439, type: 3}
+  m_Script: {fileID: 11500000, guid: b35facc409fcaac45a14fe25fe88d0f7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SaveDialog
-  saveNameInput: {fileID: 0}
-  saveButton: {fileID: 0}
-  cancelButton: {fileID: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::PlanetModel
+  resolution: 10
+  autoUpdate: 1
+  faceRenderMask: 0
+  meshFilters:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  shapeSettings: {fileID: 11400000, guid: 7e4060199bae357408de7ea734cca7f6, type: 2}
+  colorSettings: {fileID: 11400000, guid: 0e4f2d43642d77e47abfad592c0ac363, type: 2}
+  shapeSettingsFoldout: 0
+  colorSettingsFoldout: 0

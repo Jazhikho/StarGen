@@ -12,6 +12,13 @@ public class StarFaceModel : CelestialFace
 
     public override void ConstructMesh()
     {
+        // Return early if mesh or settings is null
+        if (mesh == null || settings == null)
+        {
+            Debug.LogWarning("Cannot construct star mesh: mesh or settings is null");
+            return;
+        }
+        
         Vector3[] vertices = new Vector3[resolution * resolution];
         int[] triangles = new int[(resolution - 1) * (resolution - 1) * 6];
         int triIndex = 0;

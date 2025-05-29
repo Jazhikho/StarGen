@@ -99,7 +99,7 @@ public class StarModel : CelestialBodyModel
                 starLight.intensity = starSettings.lightIntensity * (1f + flicker * 0.1f);
             }
 
-            // Could add surface animation here if needed
+            // TODO: Add surface animation here
         }
     }
 }

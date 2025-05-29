@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using System.IO;
 using System.Linq;
 
 /// <summary>
@@ -24,10 +23,6 @@ public class GalaxyDataStore : MonoBehaviour
     public DateTime CreationDate { get; set; }
     public DateTime LastSaveDate { get; set; }
     
-    // Save directory path
-    private string SaveDirectory => Path.Combine(Application.persistentDataPath, "GalaxySaves");
-    private const string SaveExtension = ".sgen";
-    
     private void Awake()
     {
         // Implement singleton pattern
@@ -39,12 +34,6 @@ public class GalaxyDataStore : MonoBehaviour
         
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        
-        // Ensure save directory exists
-        if (!Directory.Exists(SaveDirectory))
-        {
-            Directory.CreateDirectory(SaveDirectory);
-        }
     }
     
     /// <summary>
@@ -131,101 +120,9 @@ public class GalaxyDataStore : MonoBehaviour
     /// </summary>
     public List<string> GetSaveFiles()
     {
-        if (!Directory.Exists(SaveDirectory))
-        {
-            Directory.CreateDirectory(SaveDirectory);
-            return new List<string>();
-        }
-        
-        string[] files = Directory.GetFiles(SaveDirectory, $"*{SaveExtension}");
-        List<string> saveFiles = new List<string>();
-        
-        foreach (string file in files)
-        {
-            string fileName = Path.GetFileNameWithoutExtension(file);
-            saveFiles.Add(fileName);
-        }
-        
-        // Sort files by last write time (newest first)
-        saveFiles = saveFiles.OrderBy(f => File.GetLastWriteTime(Path.Combine(SaveDirectory, f + SaveExtension))).ToList();
-        
-        return saveFiles;
-    }
-    
-    /// <summary>
-    /// Saves the current galaxy data to a file
-    /// </summary>
-    /// <param name="fileName">Name for the save file (without extension)</param>
-    /// <returns>True if successful, false otherwise</returns>
-    public bool SaveGalaxyData(string fileName)
-    {
-        if (!HasGalaxyData())
-        {
-            Debug.LogError("No galaxy data to save");
-            return false;
-        }
-        
-        try
-        {
-            string filePath = Path.Combine(SaveDirectory, fileName + SaveExtension);
-            GalaxySaveData saveData = CreateSaveData();
-            
-            // Convert to JSON
-            string jsonData = JsonUtility.ToJson(saveData, true);
-            File.WriteAllText(filePath, jsonData);
-            
-            LastSaveDate = DateTime.Now;
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Failed to save galaxy data: {ex.Message}");
-            return false;
-        }
-    }
-    
-    /// <summary>
-    /// Loads galaxy data from a file
-    /// </summary>
-    /// <param name="fileName">Name of the save file (without extension)</param>
-    /// <returns>True if successful, false otherwise</returns>
-    public bool LoadGalaxyData(string fileName)
-    {
-        try
-        {
-            string filePath = Path.Combine(SaveDirectory, fileName + SaveExtension);
-            
-            if (!File.Exists(filePath))
-            {
-                Debug.LogError($"Save file not found: {filePath}");
-                return false;
-            }
-            
-            string jsonData = File.ReadAllText(filePath);
-            GalaxySaveData saveData = JsonUtility.FromJson<GalaxySaveData>(jsonData);
-            
-            if (saveData == null)
-            {
-                Debug.LogError("Failed to deserialize galaxy data");
-                return false;
-            }
-            
-            RestoreFromSaveData(saveData);
-            
-            // Emit event that galaxy was loaded successfully
-            GalaxyLoadSignalEmitter emitter = GalaxyLoadSignalEmitter.GetInstance();
-            if (emitter != null)
-            {
-                emitter.EmitGalaxyLoaded(fileName);
-            }
-            
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Failed to load galaxy data: {ex.Message}");
-            return false;
-        }
+        // Delegate to SaveSystem to get all saved galaxies
+        var savedGalaxies = SaveSystem.GetSavedGalaxies();
+        return savedGalaxies.Select(info => info.SaveName).ToList();
     }
     
     /// <summary>
@@ -253,164 +150,6 @@ public class GalaxyDataStore : MonoBehaviour
             if (metadata.PlanetCount > 0)
                 this.GenerationParameters["planet_count"] = metadata.PlanetCount;
         }
-    }
-    
-    /// <summary>
-    /// Deletes a save file
-    /// </summary>
-    /// <param name="fileName">Name of the save file (without extension)</param>
-    /// <returns>True if successful, false otherwise</returns>
-    public bool DeleteSaveFile(string fileName)
-    {
-        try
-        {
-            string filePath = Path.Combine(SaveDirectory, fileName + SaveExtension);
-
-            if (!File.Exists(filePath))
-            {
-                Debug.LogError($"Save file not found: {filePath}");
-                return false;
-            }
-
-            File.Delete(filePath);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Failed to delete save file: {ex.Message}");
-            return false;
-        }
-    }
-    
-    /// <summary>
-    /// Creates a serializable save data object from current galaxy data
-    /// </summary>
-    private GalaxySaveData CreateSaveData()
-    {
-        GalaxySaveData saveData = new GalaxySaveData
-        {
-            GalaxyName = this.GalaxyName,
-            GenerationSeed = this.GenerationSeed,
-            CreationDate = this.CreationDate.ToString("o"),
-            LastSaveDate = DateTime.Now.ToString("o"),
-            SectorCount = _sectors.Count,
-            SystemCount = _starSystems.Count,
-            // Serialize parameters as JSON string
-            GenerationParametersJson = JsonUtility.ToJson(new SerializableDictionary<string, object>(GenerationParameters))
-        };
-        
-        // Serialize sectors and systems (in a real implementation, you'd likely do this in chunks)
-        saveData.SerializedSectors = new List<string>();
-        foreach (var sector in _sectors)
-        {
-            saveData.SerializedSectors.Add(JsonUtility.ToJson(sector));
-        }
-        
-        saveData.SerializedSystems = new List<string>();
-        foreach (var system in _starSystems)
-        {
-            saveData.SerializedSystems.Add(JsonUtility.ToJson(system));
-        }
-        
-        return saveData;
-    }
-    
-    /// <summary>
-    /// Restores galaxy data from loaded save data
-    /// </summary>
-    private void RestoreFromSaveData(GalaxySaveData saveData)
-    {
-        ClearGalaxyData();
-        
-        this.GalaxyName = saveData.GalaxyName;
-        this.GenerationSeed = saveData.GenerationSeed;
-        this.CreationDate = DateTime.Parse(saveData.CreationDate);
-        this.LastSaveDate = DateTime.Parse(saveData.LastSaveDate);
-        
-        // Deserialize parameters
-        SerializableDictionary<string, object> paramDict = JsonUtility.FromJson<SerializableDictionary<string, object>>(saveData.GenerationParametersJson);
-        this.GenerationParameters = paramDict.ToDictionary();
-        
-        // Deserialize sectors
-        foreach (string sectorJson in saveData.SerializedSectors)
-        {
-            Sector sector = JsonUtility.FromJson<Sector>(sectorJson);
-            _sectors.Add(sector);
-        }
-        
-        // Deserialize systems
-        foreach (string systemJson in saveData.SerializedSystems)
-        {
-            StarSystem system = JsonUtility.FromJson<StarSystem>(systemJson);
-            _starSystems.Add(system);
-        }
-        
-        // Rebuild any runtime data structures
-        foreach (var sector in _sectors)
-        {
-            sector.RebuildDistanceMap();
-        }
-    }
-}
-
-/// <summary>
-/// Serializable container for galaxy save data
-/// </summary>
-[Serializable]
-public class GalaxySaveData
-{
-    public string GalaxyName;
-    public string GenerationSeed;
-    public string CreationDate;
-    public string LastSaveDate;
-    public int SectorCount;
-    public int SystemCount;
-    public string GenerationParametersJson;
-    public List<string> SerializedSectors;
-    public List<string> SerializedSystems;
-}
-
-/// <summary>
-/// Helper class for serializing dictionaries
-/// </summary>
-[Serializable]
-public class SerializableDictionary<TKey, TValue>
-{
-    [Serializable]
-    public class KeyValuePair
-    {
-        public string Key;
-        public string Value;
-    }
-    
-    public List<KeyValuePair> Entries = new List<KeyValuePair>();
-    
-    public SerializableDictionary() { }
-    
-    public SerializableDictionary(Dictionary<TKey, TValue> dictionary)
-    {
-        foreach (var kvp in dictionary)
-        {
-            Entries.Add(new KeyValuePair
-            {
-                Key = kvp.Key.ToString(),
-                Value = JsonUtility.ToJson(kvp.Value)
-            });
-        }
-    }
-    
-    public Dictionary<TKey, TValue> ToDictionary()
-    {
-        Dictionary<TKey, TValue> result = new Dictionary<TKey, TValue>();
-        
-        foreach (var entry in Entries)
-        {
-            TKey key = (TKey)Convert.ChangeType(entry.Key, typeof(TKey));
-            TValue value = JsonUtility.FromJson<TValue>(entry.Value);
-            result[key] = value;
-        }
-        
-        return result;
     }
 }
 

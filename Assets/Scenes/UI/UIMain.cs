@@ -35,12 +35,14 @@ public class UIMain : MonoBehaviour
         {
             GameObject entityRegistry = new GameObject("EntityRegistry");
             entityRegistry.AddComponent<EntityRegistry>();
+            DontDestroyOnLoad(entityRegistry);
         }
 
         if (GalaxyDataStore.Instance == null)
         {
             GameObject galaxyDataStore = new GameObject("GalaxyDataStore");
             galaxyDataStore.AddComponent<GalaxyDataStore>();
+            DontDestroyOnLoad(galaxyDataStore);
         }
     }
 

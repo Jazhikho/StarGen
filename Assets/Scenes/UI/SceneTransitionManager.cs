@@ -61,6 +61,27 @@ public class SceneTransitionManager : MonoBehaviour
     }
     
     /// <summary>
+    /// Show the system view for a specific star system
+    /// </summary>
+    public void ShowSystemView(StarSystem system)
+    {
+        TransitionToScene(_systemViewPrefab);
+        
+        // Set the system data
+        SystemView systemView = _currentScene.GetComponent<SystemView>();
+        if (systemView != null && system != null)
+        {
+            systemView.SetSystemData(system);
+        }
+        else
+        {
+            Debug.LogError($"Failed to set system data: SystemView={systemView != null}, StarSystem={system != null}");
+        }
+        
+        StartCoroutine(UpdateMenuNextFrame());
+    }
+    
+    /// <summary>
     /// Generic method to transition to a new scene
     /// </summary>
     private void TransitionToScene(GameObject scenePrefab)
@@ -80,6 +101,15 @@ public class SceneTransitionManager : MonoBehaviour
     {
         // If no current scene, nothing to update
         if (_currentScene == null) return;
+        
+        // Ensure GalaxyDataStore is initialized
+        if (GalaxyDataStore.Instance == null)
+        {
+            Debug.LogWarning("SceneTransitionManager: GalaxyDataStore.Instance is null, creating instance");
+            GameObject galaxyDataStore = new GameObject("GalaxyDataStore");
+            galaxyDataStore.AddComponent<GalaxyDataStore>();
+            DontDestroyOnLoad(galaxyDataStore);
+        }
         
         // Check if we have a menu panel
         if (_menuPanel == null) 

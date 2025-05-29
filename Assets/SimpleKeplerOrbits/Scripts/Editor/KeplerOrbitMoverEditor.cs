@@ -5,7 +5,7 @@ namespace SimpleKeplerOrbits
 {
 	[CustomEditor(typeof(KeplerOrbitMover))]
 	[CanEditMultipleObjects]
-	public class KeplerOrbitMoverEditor : Editor
+	public class KeplerOrbitMoverEditor : UnityEditor.Editor
 	{
 		private KeplerOrbitMover _target;
 

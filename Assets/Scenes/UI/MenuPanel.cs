@@ -92,6 +92,13 @@ public class MenuPanel : MonoBehaviour
 
     private void UpdateToolsDropdown()
     {
+        // Check for null references
+        if (toolsDropdown == null)
+        {
+            Debug.LogWarning("MenuPanel: toolsDropdown is null");
+            return;
+        }
+        
         // Clear existing options
         toolsDropdown.ClearOptions();
         
@@ -130,7 +137,15 @@ public class MenuPanel : MonoBehaviour
         // Add tool labels to dropdown
         foreach (var tool in _currentTools)
         {
-            optionLabels.Add(_toolLabels[tool]);
+            if (_toolLabels.ContainsKey(tool))
+            {
+                optionLabels.Add(_toolLabels[tool]);
+            }
+            else
+            {
+                Debug.LogWarning($"MenuPanel: Missing tool label for {tool}");
+                optionLabels.Add(tool.ToString());
+            }
         }
 
         toolsDropdown.AddOptions(optionLabels);

@@ -19,13 +19,15 @@ public class GalaxyView : MonoBehaviour
     [Header("Star Rendering")]
     public float positionScale = 50.0f;
     public int maxVisibleStars = 50000;
-    public Material starMaterial; // Optional if not referenced in StarManager
-    
+
     // Private fields
     private List<StarSystem> _galaxyData;
     private bool _isCreatingVisuals = false;
     private GalaxyCameraController _cameraController;
     private SystemInfoPanel _systemInfoController;
+    private StarSystem _lastDoubleClickedSystem;
+    private float _lastDoubleClickTime;
+    private const float _doubleClickTransitionThreshold = 0.5f;
     
     void Awake()
     {
@@ -52,11 +54,6 @@ public class GalaxyView : MonoBehaviour
             GameObject starRendererObj = new GameObject("StarRenderer");
             starRendererObj.transform.SetParent(transform);
             starManager = starRendererObj.AddComponent<StarManager>();
-            
-            // Initialize with default mesh and material if available
-            starManager.starMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
-            if (starMaterial != null)
-                starManager.starMaterial = starMaterial;
         }
         
         // Initialize star click detector
@@ -339,8 +336,39 @@ public class GalaxyView : MonoBehaviour
         StarSystem selectedSystem = FindSystemForStar(star);
         if (selectedSystem != null && _cameraController != null)
         {
+            // Focus camera on the selected system
             _cameraController.LookAtPoint(selectedSystem.Position * positionScale);
-            Debug.Log($"Double-clicked on system: {selectedSystem.ID}");
+            Debug.Log($"Camera focused on system: {selectedSystem.ID}");
+            
+            // Store selection for potential transition on second double-click
+            if (_lastDoubleClickedSystem == selectedSystem && 
+                Time.time - _lastDoubleClickTime < _doubleClickTransitionThreshold)
+            {
+                // This is a second double-click on the same system, transition to system view
+                TransitionToSystemView(selectedSystem);
+            }
+            else
+            {
+                // First double-click, store the system
+                _lastDoubleClickedSystem = selectedSystem;
+                _lastDoubleClickTime = Time.time;
+            }
+        }
+    }
+    
+    private void TransitionToSystemView(StarSystem system)
+    {
+        Debug.Log($"Transitioning to system view for: {system.ID}");
+        
+        // Find the SceneTransitionManager
+        SceneTransitionManager sceneManager = FindFirstObjectByType<SceneTransitionManager>();
+        if (sceneManager != null)
+        {
+            sceneManager.ShowSystemView(system);
+        }
+        else
+        {
+            Debug.LogError("Cannot transition to SystemView: SceneTransitionManager not found");
         }
     }
     

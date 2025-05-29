@@ -211,7 +211,7 @@ public class SaveLoadManager : MonoBehaviour
     /// <returns>True if successful, false otherwise</returns>
     public bool SaveGalaxyData(string fileName)
     {
-        bool success = GalaxyDataStore.Instance.SaveGalaxyData(fileName);
+        bool success = SaveSystem.SaveGalaxy(fileName, GalaxyDataStore.Instance);
         
         if (success)
         {
@@ -247,7 +247,7 @@ public class SaveLoadManager : MonoBehaviour
     /// <returns>True if successful, false otherwise</returns>
     public bool LoadSaveFile(string fileName)
     {
-        bool success = GalaxyDataStore.Instance.LoadGalaxyData(fileName);
+        bool success = SaveSystem.LoadGalaxy(fileName, GalaxyDataStore.Instance);
         
         if (success)
         {
@@ -257,6 +257,13 @@ public class SaveLoadManager : MonoBehaviour
             if (saveButton != null)
             {
                 saveButton.interactable = saveFilesDropdown.value > 0 && GalaxyDataStore.Instance.HasGalaxyData();
+            }
+            
+            // Emit event that galaxy was loaded successfully
+            GalaxyLoadSignalEmitter emitter = GalaxyLoadSignalEmitter.GetInstance();
+            if (emitter != null)
+            {
+                emitter.EmitGalaxyLoaded(fileName);
             }
         }
         else
@@ -275,7 +282,7 @@ public class SaveLoadManager : MonoBehaviour
     /// <returns>True if successful, false otherwise</returns>
     public bool DeleteSaveFile(string fileName)
     {
-        bool success = GalaxyDataStore.Instance.DeleteSaveFile(fileName);
+        bool success = SaveSystem.DeleteSave(fileName);
         
         if (success)
         {
